@@ -16,7 +16,7 @@ window.HedgehogIntro=class{
   this.first=0;this.last=5;this.show(0);
  }
  setMission(mission){
-  this.cancelTurn();this.mission=mission;const story=[this.hedgehog,this.owl,this.gnome,this.snail,this.spatial][mission];this.bridgeIndex=story.introCount;this.names=[...story.names.slice(0,this.bridgeIndex),'verzameld',...story.names.slice(this.bridgeIndex)];this.labels=[...story.labels.slice(0,this.bridgeIndex),'De heks heeft alle vormen verzameld voor de toverdrank',...story.labels.slice(this.bridgeIndex)];
+  this.cancelTurn();this.pour?.remove();this.pour=null;this.mission=mission;const story=[this.hedgehog,this.owl,this.gnome,this.snail,this.spatial][mission];this.bridgeIndex=story.introCount;this.names=[...story.names.slice(0,this.bridgeIndex),'verzameld',...story.names.slice(this.bridgeIndex)];this.labels=[...story.labels.slice(0,this.bridgeIndex),'De heks heeft alle vormen verzameld voor de toverdrank',...story.labels.slice(this.bridgeIndex)];
   const animal=['egel','uil','kabouter','slak','ruimtelijk'][mission];const folder='storyboard-'+animal+'/platen';
   this.node.querySelector('.story-pages').innerHTML=this.names.map((name,i)=>'<img class="story-page" src="'+(name==='verzameld'?'storyboard-dienblad-leeg':folder+'/'+name)+'.webp" alt="'+this.labels[i]+'" decoding="async">').join('');this.pages=[...this.node.querySelectorAll('.story-page')];this.node.dataset.mission=animal;
  }
@@ -26,22 +26,22 @@ window.HedgehogIntro=class{
   if(this.turn||this.arrival>0)return;
   const previous=this.index;
   if(animate&&this.active&&previous!==index&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
-   this.turn=new PageCurl(this.node.querySelector('.story-pages'),this.pages[previous],index>previous);
+   this.turn=new PageCurl(this.node.querySelector('.story-pages'),this.pour&&!this.pour.canvas.hidden?this.pour.canvas:this.pages[previous],index>previous);
   }
-  this.index=index;this.t=0;this.node.dataset.panel=String(index+1);
+  this.index=index;this.t=0;if(this.pour){if(index===this.bridgeIndex)this.pour.start();else this.pour.hide()}this.node.dataset.panel=String(index+1);
   this.pages.forEach((p,i)=>{p.classList.toggle('visible',i===index);p.setAttribute('aria-hidden',String(i!==index));p.style.transform='scale(1)'});
   this.$('previous-panel').disabled=index===this.first;
   this.node.querySelector('.story-dots').innerHTML=Array.from({length:this.last-this.first+1},(_,i)=>'<i class="'+(this.first+i===index?'selected':'')+'"></i>').join('');
   if(this.active&&index===2&&this.mission===0)this.sound(false);if(this.active&&index===this.bridgeIndex)this.sound(true);
  }
  advance(){if(!this.active||this.arrival>0||this.field.classList.contains('is-paused'))return;if(this.index<this.last)this.show(this.index+1);else this.finish()}
- finish(){if(!this.active)return;this.cancelTurn();this.active=false;this.node.hidden=true;this.field.classList.remove('story-ready','story-playing');this.done(this.mode)}
+ finish(){if(!this.active)return;this.pour?.hide();this.cancelTurn();this.active=false;this.node.hidden=true;this.field.classList.remove('story-ready','story-playing');this.done(this.mode)}
  tick(dt){
   if(!this.active)return;
   if(this.arrival>0){this.arrival=Math.max(0,this.arrival-dt);const p=1-this.arrival/1.3;this.node.style.opacity=String(p*p*(3-2*p));return}
   if(this.turn){if(this.turn.tick(dt))this.cancelTurn();return}
   const image=this.pages[this.index];if(!image.complete||!image.naturalWidth)return;
-  this.t+=dt;const duration=this.index===2?2.5:this.index===this.bridgeIndex-1?4.2:this.index===this.bridgeIndex?4.6:3.6;
+  this.t+=dt;if(this.index===this.bridgeIndex)this.pour?.tick(dt);const duration=this.index===this.bridgeIndex&&this.pour?this.pour.duration:this.index===2?2.5:this.index===this.bridgeIndex-1?4.2:this.index===this.bridgeIndex?4.6:3.6;
   if(this.t>=duration)this.advance();
  }
 };
