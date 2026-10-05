@@ -4,6 +4,7 @@ const $=id=>document.getElementById(id),field=$('field'),catcher=$('catcher');
 const rig=new WitchRig(catcher,$('pot-front'));let sinking=[],facing=1;
 let assistance=new GameRules.Assistance(),waveFailed=false;
 function catchMistake(){if(waveFailed)return;waveFailed=true;assistance.record(false);correct=Math.max(0,correct-1);combo=0;progress()}
+let repeatFlight=false;
 let flightLane=1,flyY=0,ringX=0,trailTimer=0,clueSpeaking=false,speechDeadline=0,speechVersion=0;
 let phase='start',paused=false,muted=false,round=0,correct=0,combo=0,target='',previous='',items=[],x=0,aim=0,w=0,h=0,cw=0,ch=0,time=0,next=0,flightCount=0,gateAge=0,gateLock=false,last=0,keys=new Set(),audio;
 const collected=new Set(),tray=new CollectedTray();let rewardVersion=0;
@@ -61,18 +62,18 @@ function wave(){if(items.length||phase!=='catch'||(!muted&&window.speechSynthesi
 function begin(){phase='catch';paused=false;assistance=new GameRules.Assistance();field.dataset.level=String(Math.min(5,round+1));correct=0;combo=0;clear();$('start').hidden=true;$('finished').hidden=true;$('paused').hidden=true;$('gates').replaceChildren();$('gate-fronts').replaceChildren();$('flyer').hidden=true;catcher.hidden=false;size();field.classList.remove('flying');field.setAttribute('aria-label','Vang de vorm. Beweeg naar links of rechts met je vinger, muis of pijltjestoetsen.');keys.clear();rig.lastX=null;next=time+.5;ask();progress();field.focus()}
 
 function flight(){
- phase='flight';size();clear();catcher.hidden=true;$('flyer').hidden=false;field.classList.add('flying');flightCount=0;flightLane=1;flyY=h*.52;keys.clear();progress();gates();
+ phase='flight';repeatFlight=false;size();clear();catcher.hidden=true;$('flyer').hidden=false;field.classList.add('flying');flightCount=0;flightLane=1;flyY=h*.52;keys.clear();progress();gates();
  field.setAttribute('aria-label','Vlieg boven, midden of onder. Gebruik pijltje omhoog of omlaag, je muis of je vinger.');
 }
 function laneY(i){return h*(.25+i*.27)}
-function gates(){
- gateLock=false;ringX=w+75;$('gates').replaceChildren();$('gate-fronts').replaceChildren();ask();
+function gates(repeat=false){
+ gateLock=false;ringX=w+75;$('gates').replaceChildren();$('gate-fronts').replaceChildren();if(repeat){$('question').textContent=ShapeLanguage.clue(target);say($('question').textContent,'clue')}else{ask()}
  shuffle([target,...shuffle(pool().filter(s=>s!==target&&!(target==='vierkant'&&s==='ruit'))).slice(0,2)]).forEach((s,i)=>{
   const b=document.createElement('div');b.className='gate';b.dataset.shape=s;b.dataset.lane=i;b.style.top=laneY(i)+'px';b.setAttribute('aria-label',s);b.innerHTML='<img src="'+src(s)+'" alt="">';$('gates').append(b);const front=document.createElement('div');front.className='gate gate-front';front.style.top=laneY(i)+'px';$('gate-fronts').append(front);
  });
 }
 function choose(s){
- if(gateLock)return;gateLock=true;const good=s===target;tone(good);
+ if(gateLock)return;gateLock=true;const good=s===target;repeatFlight=!good;tone(good);
  $('flyer').className=good?'flight-success':'flight-poof';particles(w*.23,flyY,good);
  const feedback=good?'Goed zo! Een '+s+'!':'Oeps! Nog eens!';
  combo=good?combo+1:0;say(feedback);$('question').textContent=feedback;
@@ -96,7 +97,7 @@ function tickFlight(dt){
  trailTimer+=dt;
  if(trailTimer>.10){trailTimer=0;const star=document.createElement('i');star.className='broom-star';star.textContent='✦';star.style.left=(w*.23-$('flyer').clientWidth*.32)+'px';star.style.top=(flyY+Math.random()*16-8)+'px';$('air').append(star);setTimeout(()=>star.remove(),1100)}
  if(ringX< -100&&time>=next&&(muted||!window.speechSynthesis?.speaking||time>=next+1.6)){
-  if(flightCount>=(round===1?5:3)){begin()}else{$('flyer').className='';gates()}
+  if(flightCount>=(round===1?5:3)){begin()}else{$('flyer').className='';gates(repeatFlight)}
  }
 }
 function togglePause(force){if(['start','finish','complete'].includes(phase))return;paused=force??!paused;field.classList.toggle('is-paused',paused);$('paused').hidden=!paused;$('pause').setAttribute('aria-label',paused?'Verder spelen':'Pauze');keys.clear();if(paused)window.speechSynthesis?.cancel();else if(phase!=='intro'&&phase!=='outro')say($('question').textContent,phase==='flight'&&!gateLock?'clue':'feedback')}
