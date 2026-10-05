@@ -13,6 +13,6 @@ balk:["Een lange doos met platte vlakken.","Een balk: een lange doos met platte 
 piramide:["Driehoekige zijkanten, bovenaan één punt.","Een piramide: driehoekige zijkanten, bovenaan één punt."],
 cilinder:["Twee platte cirkels, zoals een blikje.","Een cilinder: twee platte cirkels, zoals een blikje."]
 };
-const api={descriptions,clue:s=>descriptions[s][0],praise:s=>'Goed zo! '+descriptions[s][1]};
+const api={descriptions,clue:s=>descriptions[s][0],praise:s=>descriptions[s][1]};
 if(typeof module!=='undefined')module.exports=api;else root.ShapeLanguage=api;
 })(globalThis);
