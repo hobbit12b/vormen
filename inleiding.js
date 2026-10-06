@@ -28,21 +28,31 @@ window.HedgehogIntro=class{
   if(animate&&this.active&&previous!==index&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
    this.turn=new PageCurl(this.node.querySelector('.story-pages'),this.pour&&!this.pour.canvas.hidden?this.pour.canvas:this.pages[previous],index>previous);
   }
-  this.index=index;this.t=0;if(this.pour){if(index===this.bridgeIndex)this.pour.start();else this.pour.hide()}this.node.dataset.panel=String(index+1);
+  this.narrationToken=(this.narrationToken||0)+1;GameVoice.stop();this.narration=0;this.narrationDone=false;this.index=index;this.t=0;if(this.pour){if(index===this.bridgeIndex)this.pour.start();else this.pour.hide()}this.node.dataset.panel=String(index+1);
   this.pages.forEach((p,i)=>{p.classList.toggle('visible',i===index);p.setAttribute('aria-hidden',String(i!==index));p.style.transform='scale(1)'});
   this.$('previous-panel').disabled=index===this.first;
   this.node.querySelector('.story-dots').innerHTML=Array.from({length:this.last-this.first+1},(_,i)=>'<i class="'+(this.first+i===index?'selected':'')+'"></i>').join('');
   if(this.active&&index===2&&this.mission===0)this.sound(false);if(this.active&&index===this.bridgeIndex)this.sound(true);
  }
  advance(){if(!this.active||this.arrival>0||this.field.classList.contains('is-paused'))return;if(this.index<this.last)this.show(this.index+1);else this.finish()}
- finish(){if(!this.active)return;this.pour?.hide();this.cancelTurn();this.active=false;this.node.hidden=true;this.field.classList.remove('story-ready','story-playing');this.done(this.mode)}
+ finish(){if(!this.active)return;GameVoice.stop();this.pour?.hide();this.cancelTurn();this.active=false;this.node.hidden=true;this.field.classList.remove('story-ready','story-playing');this.done(this.mode)}
  tick(dt){
   if(!this.active)return;
   if(this.arrival>0){this.arrival=Math.max(0,this.arrival-dt);const p=1-this.arrival/1.3;this.node.style.opacity=String(p*p*(3-2*p));return}
   if(this.turn){if(this.turn.tick(dt))this.cancelTurn();return}
   const image=this.pages[this.index];if(!image.complete||!image.naturalWidth)return;
-  this.t+=dt;if(this.index===this.bridgeIndex)this.pour?.tick(dt);const duration=this.index===this.bridgeIndex&&this.pour?this.pour.duration:this.index===2?2.5:this.index===this.bridgeIndex-1?4.2:this.index===this.bridgeIndex?4.6:3.6;
-  if(this.t>=duration)this.advance();
+  if(!this.narration){
+   this.narration=1;const index=this.index;
+   const id=index===this.bridgeIndex?'verhaal_dienblad':'verhaal_'+this.node.dataset.mission+'_'+this.names[index];
+   const token=this.narrationToken=(this.narrationToken||0)+1;
+   GameVoice.play(id).then(()=>{if(this.narrationToken===token&&this.index===index)this.narrationDone=true});
+  }
+  if(this.index===this.bridgeIndex){
+   if(this.narration===1){if(!this.narrationDone)return;this.narration=2;this.narrationDone=false;const token=this.narrationToken;GameVoice.play('verhaal_in_de_ketel').then(()=>{if(this.narrationToken===token)this.narrationDone=true})}
+   this.pour?.tick(dt);
+  }
+  this.t+=dt;const duration=this.index===this.bridgeIndex&&this.pour?this.pour.duration:this.index===2?2.5:this.index===this.bridgeIndex-1?4.2:this.index===this.bridgeIndex?4.6:3.6;
+  if(this.t>=duration&&this.narrationDone)this.advance();
  }
 };
 
