@@ -79,3 +79,10 @@ header{max-width:none;height:64px;padding:8px 16px}header button{min-width:48px;
 .is-paused .answer-pop{animation-play-state:paused!important}
 @keyframes answer-pop{0%{opacity:0;transform:translate(-50%,-40%) scale(.15) rotate(-12deg)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(4deg)}36%{transform:translate(-50%,-50%) scale(1) rotate(0)}75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-67%) scale(.35) rotate(8deg)}}
 @media(prefers-reduced-motion:reduce){.answer-pop{animation:answer-fade 1.45s both;transform:translate(-50%,-50%)}@keyframes answer-fade{0%,100%{opacity:0}15%,80%{opacity:1}}}
+
+/* Keep flight movement on composited transforms, without animated layout. */
+.flying #flyer{left:0;top:0;will-change:transform;transform:translate3d(var(--fly-x,0px),var(--fly-y,0px),0) translate(-50%,-50%) rotate(var(--bank,0deg))}
+@keyframes flightbump{0%,100%{transform:translate3d(var(--fly-x),var(--fly-y),0) translate(-50%,-50%) rotate(var(--bank,0deg))}40%{transform:translate3d(var(--fly-x),var(--fly-y),0) translate(-50%,-50%) rotate(-18deg)}}
+@keyframes airflow{to{transform:translate3d(calc(-1 * var(--air-travel,1500px)),0,0)}}
+.speed-line,.cloud{will-change:transform}
+@media(pointer:coarse){.cloud{filter:none;background:radial-gradient(ellipse,#e5eee720,transparent 70%)}.ingredient{filter:none}}

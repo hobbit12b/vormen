@@ -5,15 +5,17 @@ window.WitchRig=class {
   this.host=host;this.front=front;this.canvas=document.createElement('canvas');
   host.replaceChildren(this.canvas);this.ctx=this.canvas.getContext('2d');
   this.fctx=front.getContext('2d');this.image=new Image();this.image.src='webp/hazel-met-ketel.webp';
+  this.texture=document.createElement('canvas');this.mesh=Array.from({length:21},(_,j)=>Array.from({length:11},(_,i)=>[i/10,j/20]));
   this.feet=[];this.turn=-.18;this.bob=0;this.lean=0;this.lastX=null;
  }
- render(x,w,h,t,dt,look,facing=1){
+ render(x,w,h,t,dt,look,facing=1,fieldHeight=this.host.parentElement.clientHeight){
   if(!this.image.complete||!this.image.naturalWidth)return;
-  const scale=2,pad=30,W=w+pad*2,H=h+pad*2;
+  const scale=Math.min(2,window.devicePixelRatio||1),pad=30,W=w+pad*2,H=h+pad*2;
   for(const c of [this.canvas,this.front])if(c.width!==Math.round(W*scale)||c.height!==Math.round(H*scale)){c.width=Math.round(W*scale);c.height=Math.round(H*scale);c.style.width=W+'px';c.style.height=H+'px'}
   this.canvas.style.left=-pad+'px';this.canvas.style.top=-pad+'px';
-  this.front.style.left=(x-w/2-pad)+'px';this.front.style.top=(this.host.parentElement.clientHeight-h-10-pad)+'px';
-  this.canvas.style.transform=this.front.style.transform='scaleX('+facing+')';
+  this.front.style.left='0';this.front.style.top='0';
+  this.front.style.transform='translate3d('+(x-w/2-pad)+'px,'+(fieldHeight-h-10-pad)+'px,0) scaleX('+facing+')';
+  this.canvas.style.transform='scaleX('+facing+')';
   this.host.dataset.facing=String(facing);
   if(facing!==this.facing){this.lastX=null;this.facing=facing}
   // Solve the gait in drawing coordinates, then mirror the complete drawing.
@@ -38,9 +40,12 @@ window.WitchRig=class {
    return [px+pad,py+pad];
   };
   for(const ctx of [this.ctx,this.fctx]){ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,W,H)}
-  const sw=this.image.naturalWidth,sh=this.image.naturalHeight;
-  const triangle=(ctx,uv)=>{
-   const p=uv.map(([u,v])=>warp(u,v)),s=uv.map(([u,v])=>[u*sw,v*sh]);
+  // Resize the source once, then copy only the small tile for each triangle.
+  const tw=Math.round(w*scale),th=Math.round(h*scale);
+  if(this.texture.width!==tw||this.texture.height!==th){this.texture.width=tw;this.texture.height=th;this.texture.getContext('2d').drawImage(this.image,0,0,tw,th)}
+  const sw=tw,sh=th,points=this.mesh.map(row=>row.map(([u,v])=>warp(u,v)));
+  const triangle=(ctx,uv,p)=>{
+   const s=uv.map(([u,v])=>[u*sw,v*sh]);
    const [a,b,c]=s,den=(b[0]-a[0])*(c[1]-a[1])-(c[0]-a[0])*(b[1]-a[1]);
    const ax=((p[1][0]-p[0][0])*(c[1]-a[1])-(p[2][0]-p[0][0])*(b[1]-a[1]))/den;
    const bx=((p[2][0]-p[0][0])*(b[0]-a[0])-(p[1][0]-p[0][0])*(c[0]-a[0]))/den;
@@ -48,9 +53,13 @@ window.WitchRig=class {
    const by=((p[2][1]-p[0][1])*(b[0]-a[0])-(p[1][1]-p[0][1])*(c[0]-a[0]))/den;
    ctx.save();ctx.beginPath();const mx=(p[0][0]+p[1][0]+p[2][0])/3,my=(p[0][1]+p[1][1]+p[2][1])/3;
    p.forEach(([px,py],i)=>ctx[i?'lineTo':'moveTo'](px+(px-mx)*.015,py+(py-my)*.015));ctx.closePath();ctx.clip();
-   ctx.transform(ax,ay,bx,by,p[0][0]-ax*a[0]-bx*a[1],p[0][1]-ay*a[0]-by*a[1]);ctx.drawImage(this.image,0,0);ctx.restore();
+   ctx.transform(ax,ay,bx,by,p[0][0]-ax*a[0]-bx*a[1],p[0][1]-ay*a[0]-by*a[1]);const sx=Math.max(0,Math.floor(Math.min(...s.map(q=>q[0])))-2),sy=Math.max(0,Math.floor(Math.min(...s.map(q=>q[1])))-2),ex=Math.min(sw,Math.ceil(Math.max(...s.map(q=>q[0])))+2),ey=Math.min(sh,Math.ceil(Math.max(...s.map(q=>q[1])))+2);
+   ctx.drawImage(this.texture,sx,sy,ex-sx,ey-sy,sx,sy,ex-sx,ey-sy);ctx.restore();
   };
-  for(let j=0;j<32;j++)for(let i=0;i<20;i++){const u=i/20,v=j/32,U=(i+1)/20,V=(j+1)/32;triangle(this.ctx,[[u,v],[U,v],[u,V]]);triangle(this.ctx,[[U,v],[U,V],[u,V]])}
+  for(let j=0;j<20;j++)for(let i=0;i<10;i++){
+   const a=this.mesh[j][i],b=this.mesh[j][i+1],c=this.mesh[j+1][i],d=this.mesh[j+1][i+1],A=points[j][i],B=points[j][i+1],C=points[j+1][i],D=points[j+1][i+1];
+   triangle(this.ctx,[a,b,c],[A,B,C]);triangle(this.ctx,[b,d,c],[B,D,C]);
+  }
   // Repaint only the whites inside the original ink outlines; pupils follow
   // the closest falling object, including distractors, without giving answers.
   const blink=t%4.7>4.52;

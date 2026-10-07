@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id),field=$('field'),catcher=$('catcher');
 const rig=new WitchRig(catcher,$('pot-front'));let sinking=[],facing=1;
 let assistance=new GameRules.Assistance(),waveFailed=false;
 function catchMistake(){if(waveFailed)return;waveFailed=true;assistance.record(false);correct=Math.max(0,correct-1);combo=0;progress()}
-let repeatFlight=false;
+let repeatFlight=false,cachedItemSize=70,cachedFlyerWidth=235;
 let flightLane=1,flyY=0,ringX=0,trailTimer=0,clueSpeaking=false,speechDeadline=0,speechVersion=0,thinkUntil=0;
 let phase='start',paused=false,muted=false,round=0,correct=0,combo=0,target='',previous='',items=[],x=0,aim=0,w=0,h=0,cw=0,ch=0,time=0,next=0,flightCount=0,gateAge=0,gateLock=false,last=0,keys=new Set(),audio;
 const collected=new Set(),tray=new CollectedTray();let rewardVersion=0;
@@ -31,7 +31,7 @@ const shuffle=a=>a.slice().sort(()=>Math.random()-.5);
 const level=()=>GameRules.level(round);
 const pool=()=>level().shapes;
 const named=s=>(s==='vierkant'?'het ':'de ')+s;
-const itemSize=()=>parseFloat(getComputedStyle(field).getPropertyValue('--ingredient-size'))||(w<600?62:70);
+const itemSize=()=>cachedItemSize;
 const src=s=>'vormen/'+s+(GameRules.levels[4].shapes.includes(s)?'-ruimtelijk':'-basis')+'.svg';
 function showAnswer(shape){
  field.querySelector('.answer-pop')?.remove();
@@ -51,7 +51,7 @@ function say(text,kind='feedback'){
  GameVoice.play(id).then(()=>{if(version===speechVersion){clueSpeaking=false;if(kind==='clue')thinkUntil=time+2.2}});
 }
 function tone(ok){if(muted)return;try{audio??=new(window.AudioContext||window.webkitAudioContext)();audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.connect(g);g.connect(audio.destination);o.type='sine';o.frequency.setValueAtTime(ok?520:180,audio.currentTime);o.frequency.exponentialRampToValueAtTime(ok?1000:100,audio.currentTime+.2);g.gain.setValueAtTime(.12,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.35);o.start();o.stop(audio.currentTime+.35)}catch{}}
-function size(){const oldW=w;w=field.clientWidth;if(oldW&&oldW!==w)items.forEach(item=>item.x=item.x/oldW*w);h=field.clientHeight;cw=parseFloat(getComputedStyle(catcher).width);ch=parseFloat(getComputedStyle(catcher).height);x=Math.max(w/4,Math.min(w*3/4,x||w/2));aim=x;position();for(const group of [$('gates'),$('gate-fronts')])[...group.children].forEach((g,i)=>g.style.top=laneY(i)+'px');if(phase==='flight')flyY=laneY(flightLane)}
+function size(){const oldW=w;w=field.clientWidth;if(oldW&&oldW!==w)items.forEach(item=>item.x=item.x/oldW*w);h=field.clientHeight;cachedItemSize=parseFloat(getComputedStyle(field).getPropertyValue('--ingredient-size'))||(w<600?62:70);cachedFlyerWidth=$('flyer').clientWidth||235;field.style.setProperty('--air-travel',(w+300)+'px');cw=parseFloat(getComputedStyle(catcher).width);ch=parseFloat(getComputedStyle(catcher).height);x=Math.max(w/4,Math.min(w*3/4,x||w/2));aim=x;position();for(const group of [$('gates'),$('gate-fronts')])[...group.children].forEach((g,i)=>g.style.top=laneY(i)+'px');if(phase==='flight')flyY=laneY(flightLane)}
 function position(){catcher.style.transform='translate('+(x-cw*.5-facing*cw*.05)+'px,'+(h-ch-10)+'px)'}
 function particles(px,py,ok=true){for(let i=0;i<10;i++){const e=document.createElement('img');e.src='effecten/'+(ok?'ster':'rook')+'.svg';e.className='spark';e.style.cssText='left:'+px+'px;top:'+py+'px;--dx:'+(Math.random()*150-75)+'px;--dy:'+(-30-Math.random()*100)+'px';$('fx').append(e);setTimeout(()=>e.remove(),1000)}}
 function immerse(item,good){
@@ -60,7 +60,7 @@ const el=item.el; $(good?'caught':'falling').append(el); sinking.push({el,good,a
 function animateWitch(dt){if(phase==='intro'||phase==='outro'||phase==='start'||phase==='complete')return;if(phase==='flight'){$('pot-front').hidden=true;return}
 const top=h-ch-10;
 const nearest=items.filter(i=>i.y<top+ch*.43).sort((a,b)=>Math.hypot(a.x-x,a.y-top-ch*.25)-Math.hypot(b.x-x,b.y-top-ch*.25))[0];
-rig.render(x-facing*cw*.05,cw,ch,time,dt,nearest?{x:nearest.x-(x-facing*cw*.05-cw/2),y:nearest.y-top}:null,facing);
+rig.render(x-facing*cw*.05,cw,ch,time,dt,nearest?{x:nearest.x-(x-facing*cw*.05-cw/2),y:nearest.y-top}:null,facing,h);
 $('pot-front').hidden=catcher.hidden;
 for(const s of [...sinking]){s.age+=dt;const p=Math.min(1,s.age/.55),sz=itemSize();
 const px=x+s.offset*(1-p),rim=top+ch*.417+rig.bob;
@@ -78,7 +78,7 @@ function wave(){if(field.querySelector('.answer-pop')||items.length||phase!=='ca
 function begin(){phase='catch';paused=false;assistance=new GameRules.Assistance();field.dataset.level=String(Math.min(5,round+1));correct=0;combo=0;clear();$('start').hidden=true;$('finished').hidden=true;$('paused').hidden=true;$('gates').replaceChildren();$('gate-fronts').replaceChildren();$('flyer').hidden=true;catcher.hidden=false;size();field.classList.remove('flying');field.setAttribute('aria-label','Vang de vorm. Beweeg naar links of rechts met je vinger, muis of pijltjestoetsen.');keys.clear();rig.lastX=null;next=time+.5;ask();progress();field.focus()}
 
 function flight(){
- phase='flight';repeatFlight=false;size();clear();catcher.hidden=true;$('flyer').hidden=false;field.classList.add('flying');flightCount=0;flightLane=1;flyY=h*.52;keys.clear();progress();gates();
+ phase='flight';repeatFlight=false;size();clear();catcher.hidden=true;$('flyer').hidden=false;field.classList.add('flying');cachedFlyerWidth=$('flyer').clientWidth;flightCount=0;flightLane=1;flyY=h*.52;keys.clear();progress();gates();
  field.setAttribute('aria-label','Vlieg boven, midden of onder. Gebruik pijltje omhoog of omlaag, je muis of je vinger.');
 }
 function laneY(i){return h*(.25+i*.27)}
@@ -98,26 +98,26 @@ function choose(s){
 function tickFlight(dt){
  for(const gate of $('gates').children)gate.firstChild.style.transform='rotate('+(GameRules.angle(round,gate.dataset.shape,time))+'deg)';
  const oldY=flyY;flyY+=(laneY(flightLane)-flyY)*Math.min(1,dt*12);
- $('flyer').style.top=flyY+'px';$('flyer').style.left=(w*.23)+'px';
+ $('flyer').style.setProperty('--fly-x',(w*.23)+'px');$('flyer').style.setProperty('--fly-y',flyY+'px');
  $('flyer').style.setProperty('--bank',Math.max(-12,Math.min(12,(flyY-oldY)*2))+'deg');
  let speed=gateLock?w*.85:w*.85/Math.max(4.8,5.5-combo*.08);
  // Keep the rings moving, while leaving time to hear the entire clue.
  if(!gateLock&&(clueSpeaking||time<thinkUntil)&&ringX<w*.6)speed=Math.min(speed,Math.max(0,ringX-w*.38)*.85);
  ringX-=dt*speed;
- $('gates').style.transform='translateX('+ringX+'px)';$('gate-fronts').style.transform=$('gates').style.transform;
+ $('gates').style.transform='translate3d('+ringX+'px,0,0)';$('gate-fronts').style.transform=$('gates').style.transform;
  if(!gateLock&&ringX<=w*.23){
   const row=Math.round((flyY/h-.25)/.27);
   const ring=[...$('gates').children].find(e=>+e.dataset.lane===row);
   choose(ring&&Math.abs(flyY-laneY(row))<h*.09?ring.dataset.shape:null);
  }
  trailTimer+=dt;
- if(trailTimer>.10){trailTimer=0;const star=document.createElement('i');star.className='broom-star';star.textContent='✦';star.style.left=(w*.23-$('flyer').clientWidth*.32)+'px';star.style.top=(flyY+Math.random()*16-8)+'px';$('air').append(star);setTimeout(()=>star.remove(),1100)}
+ if(trailTimer>.10){trailTimer=0;const star=document.createElement('i');star.className='broom-star';star.textContent='✦';star.style.left=(w*.23-cachedFlyerWidth*.32)+'px';star.style.top=(flyY+Math.random()*16-8)+'px';$('air').append(star);setTimeout(()=>star.remove(),1100)}
  if(ringX< -100&&!field.querySelector('.answer-pop')&&time>=next&&(muted||!GameVoice.busy)){
   if(flightCount>=(round===1?5:3)){begin()}else{$('flyer').className='';gates(repeatFlight)}
  }
 }
 function togglePause(force){if(['start','finish','complete'].includes(phase))return;paused=force??!paused;field.classList.toggle('is-paused',paused);$('paused').hidden=!paused;$('pause').setAttribute('aria-label',paused?'Verder spelen':'Pauze');keys.clear();if(paused){GameVoice.pause();GameMusic.pause()}else{GameVoice.resume();GameMusic.resume()}}
-function frame(now){const dt=Math.min(.035,(now-last)/1000||0);last=now;GameMusic.update(dt,GameVoice.busy);if(!paused){time+=dt;if(phase==='intro'||phase==='outro'){intro.tick(dt);if(phase==='outro'&&!intro.arrival)landStory()}else if(phase==='catch'){if(keys.size)aim=x+((keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0))*cw*1.4*dt;aim=Math.max(w/4,Math.min(w*3/4,aim));const dx=keys.size?aim-x:Math.max(-cw*1.4*dt,Math.min(cw*1.4*dt,(aim-x)*Math.min(1,dt*10)));x+=dx;if(Math.abs(dx)>.05)facing=dx<0?-1:1;catcher.classList.toggle('walking',Math.abs(dx)>.35);position();if(time>=next&&!items.length)wave();const rim=h-ch-10+ch*.417+rig.bob,size=itemSize();for(const item of [...items]){const old=item.y;item.y+=dt*(65+Math.min(round,6)*7+correct*3)*Math.max(.8,h/760);item.el.style.transform='translate('+(item.x-size/2)+'px,'+(item.y-size/2)+'px) rotate('+(GameRules.angle(round,item.s,time,item.x))+'deg)';if(!item.seen&&old+size*.28<rim&&item.y+size*.28>=rim){item.seen=true;if(GameRules.fits(item.x-x,cw,size)){const good=item.s===target;if(good)assistance.record(true);else catchMistake();immerse(item,good);items=items.filter(a=>a!==item);tone(good);particles(item.x,rim,good);if(good){collected.add(item.s);correct++;combo++;showAnswer(target);say(target);progress();clear();next=time+.9;if(correct===5){phase='transition';next=time+1;}else{ask()}break}else{combo=0;say('Ai, dat was geen '+target+', maar een '+item.s+'!');clear();next=time+.65;break}}else if(item.s===target){catchMistake()}}if(item.y>h+size){item.el.remove();items=items.filter(a=>a!==item)}}}else if(phase==='transition'&&time>=next&&!GameVoice.busy&&!field.querySelector('.answer-pop')){storyReward()}else if(phase==='flight'){tickFlight(dt)}else if(phase==='finish'&&time>=next)$('finished').hidden=false;animateWitch(dt)}requestAnimationFrame(frame)}
+function frame(now){const dt=Math.min(.1,(now-last)/1000||0);last=now;GameMusic.update(dt,GameVoice.busy);if(!paused){time+=dt;if(phase==='intro'||phase==='outro'){intro.tick(dt);if(phase==='outro'&&!intro.arrival&&!catcher.hidden)landStory()}else if(phase==='catch'){if(keys.size)aim=x+((keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0))*cw*1.4*dt;aim=Math.max(w/4,Math.min(w*3/4,aim));const dx=keys.size?aim-x:Math.max(-cw*1.4*dt,Math.min(cw*1.4*dt,(aim-x)*Math.min(1,dt*10)));x+=dx;if(Math.abs(dx)>.05)facing=dx<0?-1:1;catcher.classList.toggle('walking',Math.abs(dx)>.35);position();if(time>=next&&!items.length)wave();const rim=h-ch-10+ch*.417+rig.bob,size=itemSize();for(const item of [...items]){const old=item.y;item.y+=dt*(65+Math.min(round,6)*7+correct*3)*Math.max(.8,h/760);item.el.style.transform='translate('+(item.x-size/2)+'px,'+(item.y-size/2)+'px) rotate('+(GameRules.angle(round,item.s,time,item.x))+'deg)';if(!item.seen&&old+size*.28<rim&&item.y+size*.28>=rim){item.seen=true;if(GameRules.fits(item.x-x,cw,size)){const good=item.s===target;if(good)assistance.record(true);else catchMistake();immerse(item,good);items=items.filter(a=>a!==item);tone(good);particles(item.x,rim,good);if(good){collected.add(item.s);correct++;combo++;showAnswer(target);say(target);progress();clear();next=time+.9;if(correct===5){phase='transition';next=time+1;}else{ask()}break}else{combo=0;say('Ai, dat was geen '+target+', maar een '+item.s+'!');clear();next=time+.65;break}}else if(item.s===target){catchMistake()}}if(item.y>h+size){item.el.remove();items=items.filter(a=>a!==item)}}}else if(phase==='transition'&&time>=next&&!GameVoice.busy&&!field.querySelector('.answer-pop')){storyReward()}else if(phase==='flight'){tickFlight(dt)}else if(phase==='finish'&&time>=next)$('finished').hidden=false;animateWitch(dt)}requestAnimationFrame(frame)}
 function move(e){if(paused||e.target.closest('button'))return;const box=field.getBoundingClientRect();if(phase==='flight'){flightLane=Math.max(0,Math.min(2,Math.round(((e.clientY-box.top)/h-.25)/.27)))}else if(phase==='catch')aim=e.clientX-box.left}
 field.addEventListener('pointercancel',()=>{aim=x;keys.clear()});
 field.addEventListener('pointerdown',e=>{move(e);if(!e.target.closest('button')&&['catch','flight'].includes(phase))field.setPointerCapture(e.pointerId)});field.addEventListener('pointermove',move);
