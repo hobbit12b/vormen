@@ -21,9 +21,9 @@ window.HedgehogIntro=class{
   this.node.querySelector('.story-pages').innerHTML=this.names.map((name,i)=>'<img class="story-page" src="'+(name==='verzameld'?'storyboard-dienblad-leeg':folder+'/'+name)+'.webp" alt="'+this.labels[i]+'" decoding="async">').join('');this.pages=[...this.node.querySelectorAll('.story-page')];this.node.dataset.mission=animal;
  }
  start(mode='intro'){this.cancelTurn();this.mode=mode;this.first=mode==='reward'?this.bridgeIndex:0;this.last=mode==='reward'?this.pages.length-1:this.bridgeIndex-1;this.active=true;this.node.hidden=false;this.field.classList.add('story-ready','story-playing');this.show(this.first,false);this.arrival=mode==='reward'&&!matchMedia('(prefers-reduced-motion: reduce)').matches?1.3:0;this.node.style.opacity=this.arrival?'0':'1'}
- cancelTurn(){this.arrival=0;this.node.style.opacity='1';if(this.turn){this.turn.remove();this.turn=null}}
+ cancelTurn(){this.leaving=null;this.arrival=0;this.node.style.opacity='1';if(this.turn){this.turn.remove();this.turn=null}}
  show(index,animate=true){
-  if(this.turn||this.arrival>0)return;
+  if(this.turn||this.arrival>0||this.leaving)return;
   const previous=this.index;
   if(animate&&this.active&&previous!==index&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
    this.turn=new PageCurl(this.node.querySelector('.story-pages'),this.pour&&!this.pour.canvas.hidden?this.pour.canvas:this.pages[previous],index>previous);
@@ -34,10 +34,20 @@ window.HedgehogIntro=class{
   this.node.querySelector('.story-dots').innerHTML=Array.from({length:this.last-this.first+1},(_,i)=>'<i class="'+(this.first+i===index?'selected':'')+'"></i>').join('');
   if(this.active&&index===2&&this.mission===0)this.sound(false);if(this.active&&index===this.bridgeIndex)this.sound(true);
  }
- advance(){if(!this.active||this.arrival>0||this.field.classList.contains('is-paused'))return;if(this.index<this.last)this.show(this.index+1);else this.finish()}
- finish(){if(!this.active)return;GameVoice.stop();this.pour?.hide();this.cancelTurn();this.active=false;this.node.hidden=true;this.field.classList.remove('story-ready','story-playing');this.done(this.mode)}
+ advance(){if(!this.active||this.arrival>0||this.leaving||this.field.classList.contains('is-paused'))return;if(this.index<this.last)this.show(this.index+1);else this.finish()}
+ finish(){
+  if(!this.active||this.leaving||this.field.classList.contains('is-paused'))return;
+  if(this.mode==='intro'){
+   const extra=['verhaal_egel_06b-help_de_heks','verhaal_kabouter_06-ik_maak_toverdrankje','verhaal_kabouter_06-ik_maak_toverdrankje','verhaal_slak_06b-help_de_heks - kopie'][this.mission];
+   const leaving=this.leaving={waiting:true,elapsed:0};this.narrationToken=(this.narrationToken||0)+1;
+   GameVoice.play(extra).then(()=>{if(this.leaving===leaving){leaving.waiting=false;this.field.classList.add('flying')}});return;
+  }
+  this.complete();
+ }
+ complete(){if(!this.active)return;GameVoice.stop();this.pour?.hide();this.cancelTurn();this.active=false;this.node.hidden=true;this.field.classList.remove('story-ready','story-playing');this.done(this.mode)}
  tick(dt){
   if(!this.active)return;
+  if(this.leaving){if(this.leaving.waiting)return;const duration=matchMedia('(prefers-reduced-motion: reduce)').matches?.3:1.6;this.leaving.elapsed+=dt;const p=Math.min(1,this.leaving.elapsed/duration);this.node.style.opacity=String(1-p*p*(3-2*p));if(p===1)this.complete();return}
   if(this.arrival>0){this.arrival=Math.max(0,this.arrival-dt);const p=1-this.arrival/1.3;this.node.style.opacity=String(p*p*(3-2*p));return}
   if(this.turn){if(this.turn.tick(dt))this.cancelTurn();return}
   const image=this.pages[this.index];if(!image.complete||!image.naturalWidth)return;

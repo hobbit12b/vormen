@@ -5,7 +5,7 @@ const rig=new WitchRig(catcher,$('pot-front'));let sinking=[],facing=1;
 let assistance=new GameRules.Assistance(),waveFailed=false;
 function catchMistake(){if(waveFailed)return;waveFailed=true;assistance.record(false);correct=Math.max(0,correct-1);combo=0;progress()}
 let repeatFlight=false;
-let flightLane=1,flyY=0,ringX=0,trailTimer=0,clueSpeaking=false,speechDeadline=0,speechVersion=0;
+let flightLane=1,flyY=0,ringX=0,trailTimer=0,clueSpeaking=false,speechDeadline=0,speechVersion=0,thinkUntil=0;
 let phase='start',paused=false,muted=false,round=0,correct=0,combo=0,target='',previous='',items=[],x=0,aim=0,w=0,h=0,cw=0,ch=0,time=0,next=0,flightCount=0,gateAge=0,gateLock=false,last=0,keys=new Set(),audio;
 const collected=new Set(),tray=new CollectedTray();let rewardVersion=0;
 const intro=new HedgehogIntro(field,mode=>{
@@ -48,7 +48,7 @@ function say(text,kind='feedback'){
  else if(text.startsWith('Een '))id='vliegen_goed_'+text.slice(4).replace('!','');
  else if(GameRules.levels.some(l=>l.shapes.includes(text)))id='vangen_goed_'+text;
  clueSpeaking=!muted&&kind==='clue';speechDeadline=Infinity;
- GameVoice.play(id).then(()=>{if(version===speechVersion)clueSpeaking=false});
+ GameVoice.play(id).then(()=>{if(version===speechVersion){clueSpeaking=false;if(kind==='clue')thinkUntil=time+2.2}});
 }
 function tone(ok){if(muted)return;try{audio??=new(window.AudioContext||window.webkitAudioContext)();audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.connect(g);g.connect(audio.destination);o.type='sine';o.frequency.setValueAtTime(ok?520:180,audio.currentTime);o.frequency.exponentialRampToValueAtTime(ok?1000:100,audio.currentTime+.2);g.gain.setValueAtTime(.12,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.35);o.start();o.stop(audio.currentTime+.35)}catch{}}
 function size(){const oldW=w;w=field.clientWidth;if(oldW&&oldW!==w)items.forEach(item=>item.x=item.x/oldW*w);h=field.clientHeight;cw=parseFloat(getComputedStyle(catcher).width);ch=parseFloat(getComputedStyle(catcher).height);x=Math.max(w/4,Math.min(w*3/4,x||w/2));aim=x;position();for(const group of [$('gates'),$('gate-fronts')])[...group.children].forEach((g,i)=>g.style.top=laneY(i)+'px');if(phase==='flight')flyY=laneY(flightLane)}
@@ -100,9 +100,9 @@ function tickFlight(dt){
  const oldY=flyY;flyY+=(laneY(flightLane)-flyY)*Math.min(1,dt*12);
  $('flyer').style.top=flyY+'px';$('flyer').style.left=(w*.23)+'px';
  $('flyer').style.setProperty('--bank',Math.max(-12,Math.min(12,(flyY-oldY)*2))+'deg');
- let speed=gateLock?w*.85:w*.85/Math.max(3.5,4.1-combo*.12);
+ let speed=gateLock?w*.85:w*.85/Math.max(4.8,5.5-combo*.08);
  // Keep the rings moving, while leaving time to hear the entire clue.
- if(!gateLock&&clueSpeaking&&time<speechDeadline&&ringX<w*.55)speed=Math.min(speed,Math.max(0,ringX-w*.24)*.85);
+ if(!gateLock&&(clueSpeaking||time<thinkUntil)&&ringX<w*.6)speed=Math.min(speed,Math.max(0,ringX-w*.38)*.85);
  ringX-=dt*speed;
  $('gates').style.transform='translateX('+ringX+'px)';$('gate-fronts').style.transform=$('gates').style.transform;
  if(!gateLock&&ringX<=w*.23){

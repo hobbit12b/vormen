@@ -8,5 +8,5 @@ window.GameMusic=new class {
  resume(){this.paused=false;this.sync()}
  toggle(){this.enabled=!this.enabled;try{localStorage.setItem('vormenspel-muziek',this.enabled?'aan':'uit')}catch{}this.sync();return this.enabled}
  setMuted(value){this.masterMuted=value;this.sync()}
- update(dt,speaking){const target=speaking ? .018 : .15;const speed=speaking?18:2;this.audio.volume+= (target-this.audio.volume)*Math.min(1,dt*speed)}
+ update(dt,speaking){const target=speaking ? .045 : .30;const speed=speaking?18:2;this.audio.volume+= (target-this.audio.volume)*Math.min(1,dt*speed)}
 };
