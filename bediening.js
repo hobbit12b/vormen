@@ -8,6 +8,9 @@ function state(){const full=!!(document.fullscreenElement||document.webkitFullsc
 window.requestGameFullscreen=()=>{if(document.fullscreenElement||document.webkitFullscreenElement||standalone())return;const root=document.documentElement,request=root.requestFullscreen||root.webkitRequestFullscreen;if(request){try{const result=request.call(root);result?.catch(()=>{});}catch{}}state()};
 $('fullscreen').onclick=window.requestGameFullscreen;
 document.addEventListener('fullscreenchange',state);document.addEventListener('webkitfullscreenchange',state);window.addEventListener('resize',state);
-for(const id of ['music','audio','pause'])new MutationObserver(paint).observe($(id),{attributes:true,attributeFilter:['aria-label','aria-pressed']});
+for(const id of ['audio','pause'])new MutationObserver(paint).observe($(id),{attributes:true,attributeFilter:['aria-label','aria-pressed']});
+$('resume').innerHTML=svg('<path d="M11 6l15 10-15 10z" fill="currentColor" stroke="none"/>');
+function shelfControls(){const on=$('field').classList.contains('on-shelf');$('home').hidden=on;$('pause').hidden=on}
+new MutationObserver(shelfControls).observe($('field'),{attributes:true,attributeFilter:['class']});shelfControls();
 window.paintGameControls=paint;paint();state();
 })();

@@ -14,9 +14,9 @@ const intro=new HedgehogIntro(field,mode=>{
 },tone);
 const shelf=new BookShelf(field,i=>{round=i;previous='';targetBag=[];startMissionStory()});
 let targetBag=[];
-function showShelf(){GameMusic.stop();field.querySelector('.answer-pop')?.remove();rewardVersion++;phase='start';paused=false;keys.clear();intro.active=false;intro.pour?.hide();intro.cancelTurn();intro.node.hidden=true;field.classList.remove('story-playing','story-ready','flying','is-paused');clear();sinking=[];$('caught').replaceChildren();$('gates').replaceChildren();$('gate-fronts').replaceChildren();$('flyer').hidden=true;catcher.hidden=true;$('pot-front').hidden=true;$('start').hidden=true;$('finished').hidden=true;$('paused').hidden=true;GameVoice.stop();GameVoice.paused=false;shelf.show()}
+function showShelf(){$('pause').setAttribute('aria-label','Pauze');GameMusic.stop();field.querySelector('.answer-pop')?.remove();rewardVersion++;phase='start';paused=false;keys.clear();intro.active=false;intro.pour?.hide();intro.cancelTurn();intro.node.hidden=true;field.classList.remove('story-playing','story-ready','flying','is-paused');clear();sinking=[];$('caught').replaceChildren();$('gates').replaceChildren();$('gate-fronts').replaceChildren();$('flyer').hidden=true;catcher.hidden=true;$('pot-front').hidden=true;$('start').hidden=true;$('finished').hidden=true;$('paused').hidden=true;GameVoice.stop();GameVoice.paused=false;shelf.show()}
 function completeBook(){const lastImage=intro.pages.at(-1).src;showShelf();phase='complete';shelf.finish(round,lastImage).then(()=>{phase='start'})}
-function startMissionStory(){window.requestGameFullscreen?.();GameMusic.start();collected.clear();combo=0;correct=0;shelf.hide();phase='intro';paused=false;field.classList.remove('is-paused','flying');$('finished').hidden=true;$('start').hidden=true;clear();$('gates').replaceChildren();$('gate-fronts').replaceChildren();$('flyer').hidden=true;catcher.hidden=true;$('pot-front').hidden=true;intro.setMission(round);intro.start();field.focus()}
+function startMissionStory(){window.requestGameFullscreen?.();if(!GameMusic.enabled)GameMusic.toggle();GameMusic.start();collected.clear();combo=0;correct=0;shelf.hide();phase='intro';paused=false;field.classList.remove('is-paused','flying');$('finished').hidden=true;$('start').hidden=true;clear();$('gates').replaceChildren();$('gate-fronts').replaceChildren();$('flyer').hidden=true;catcher.hidden=true;$('pot-front').hidden=true;intro.setMission(round);intro.start();field.focus()}
 async function storyReward(){
  phase='landing';const version=++rewardVersion;const shapes=[...collected];
  try{const src=await tray.render(shapes);if(version!==rewardVersion||phase!=='landing')return;
@@ -124,13 +124,5 @@ field.addEventListener('pointercancel',()=>{aim=x;keys.clear()});
 field.addEventListener('pointerdown',e=>{move(e);if(!e.target.closest('button')&&['catch','flight'].includes(phase))field.setPointerCapture(e.pointerId)});field.addEventListener('pointermove',move);
 window.addEventListener('keydown',e=>{if(phase==='flight'&&['ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();if(!paused&&!e.repeat)flightLane=Math.max(0,Math.min(2,flightLane+(e.key==='ArrowUp'?-1:1)));return}if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();keys.add(e.key)}if(e.code==='Space'&&e.target===field){e.preventDefault();togglePause()}});window.addEventListener('keyup',e=>{keys.delete(e.key);if(e.key==='ArrowLeft'||e.key==='ArrowRight')aim=x});window.addEventListener('blur',()=>{if(!paused)togglePause(true)});document.addEventListener('visibilitychange',()=>{if(document.hidden)togglePause(true)});
 $('play').onclick=startMissionStory;$('again').onclick=()=>{round=0;startMissionStory()};$('replay-owl').onclick=()=>{round=1;startMissionStory()};$('pause').onclick=()=>togglePause();$('resume').onclick=()=>togglePause(false);$('repeat').onclick=()=>{if(intro.active)intro.show(intro.index,false);else say($('question').textContent,phase==='flight'&&!gateLock?'clue':'feedback')};$('audio').onclick=()=>{muted=!muted;$('audio').textContent=muted?'🔇':'🔊';$('audio').setAttribute('aria-label',muted?'Geluid aanzetten':'Geluid uitzetten');GameVoice.setMuted(muted);GameMusic.setMuted(muted)};
-function musicButton(){const on=GameMusic.enabled;$('music').textContent=on?'♪':'♪̸';$('music').setAttribute('aria-label',on?'Muziek uitzetten':'Muziek aanzetten');$('music').setAttribute('aria-pressed',String(on))}
-$('music').onclick=()=>{GameMusic.toggle();musicButton()};musicButton();
 $('home').onclick=()=>{if(!shelf.busy)showShelf()};showShelf();new ResizeObserver(size).observe(field);size();requestAnimationFrame(frame);
 })();
-
-
-
-
-
-

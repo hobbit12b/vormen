@@ -10,13 +10,20 @@ window.BookShelf=class{
  ];
  try{this.completed=JSON.parse(localStorage.getItem('heksenbos-books')||'[]');if(!Array.isArray(this.completed))this.completed=[]}catch{this.completed=[]}
  this.node=document.createElement('section');this.node.id='bookshelf';this.node.setAttribute('aria-label','Kies een boek');
- this.node.innerHTML='<div class="shelf-moon">☾</div><div class="shelf-crown" aria-hidden="true"><span>✦</span><svg viewBox="0 0 80 60"><path d="M40 53Q25 40 6 46V9Q24 3 40 16Q56 3 74 9V46Q56 40 40 53Z M40 16V53" fill="none" stroke="currentColor" stroke-width="3"/></svg><span>✦</span></div><div class="bookcase">'+this.books.map((b,i)=>'<button class="shelf-book" data-book="'+i+'" style="--cloth:'+b.color+'" aria-label="Boek '+(i+1)+': '+b.title+'"><span class="book-spine"></span><span class="book-cover"><span class="book-number">'+(i+1)+'</span>'+this.art(b,i)+'<span class="book-shapes">'+b.shapes.map(s=>'<img src="'+this.src(s)+'" alt="">').join('')+'</span>'+(b.turn?'<span class="turn-symbol" aria-hidden="true">↻</span>':'')+'<span class="book-seal" aria-hidden="true">★</span></span></button>').join('')+'</div><div class="shelf-leaves" aria-hidden="true">❧</div>';
+ this.node.innerHTML='<div class="bookcase">'+this.books.map((b,i)=>'<button class="shelf-book" data-book="'+i+'" style="--cloth:'+b.color+'" aria-label="Boek '+(i+1)+': '+b.title+'"><span class="book-spine"></span><span class="book-cover"><span class="book-number">'+(i+1)+'</span>'+this.art(b,i)+'<span class="book-shapes">'+b.shapes.map(s=>'<img src="'+this.src(s)+'" alt="">').join('')+'</span>'+(b.turn?'<span class="turn-symbol" aria-hidden="true">↻</span>':'')+'<span class="book-seal" aria-hidden="true">★</span></span></button>').join('')+'</div>';
  field.append(this.node);
  this.node.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>{if(!this.busy){this.hide();select(+b.dataset.book)}});
- this.show();
+ this.setupTeacher();this.show();
  }
  src(s){return 'vormen/'+s+(['kubus','bol','balk','piramide','cilinder'].includes(s)?'-ruimtelijk':'-basis')+'.svg'}
  art(b,i){return b.image?'<span class="cover-picture"><img src="'+b.image+'" alt=""></span>':'<span class="cover-picture shape-emblem"><i>✦</i><img src="'+this.src(b.shapes[0])+'" alt=""><i>✧</i></span>'}
+ setupTeacher(){
+ const gear=document.createElement("button");gear.id="teacher-settings";gear.className="wood-control";gear.setAttribute("aria-label","Docentinstellingen");gear.innerHTML='<svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="m13 3 6 0 1 4 3 2 4-1 3 5-3 3 0 3 2 3-4 5-4-2-3 1-2 4-6-1-1-4-3-2-4 1-2-6 3-2 0-3-2-3 4-4 4 2z"/><circle cx="16" cy="16" r="5"/></svg>';this.node.append(gear);
+ const dialog=document.createElement("dialog");dialog.id="teacher-dialog";dialog.setAttribute("aria-labelledby","teacher-title");dialog.innerHTML='<h2 id="teacher-title">Behaalde boeken</h2><p>Haal het vinkje weg om een boek opnieuw te laten behalen.</p><div class="teacher-books"></div><p class="device-note">Dit wordt op dit apparaat bewaard.</p><button class="teacher-close">Klaar</button>';this.node.append(dialog);
+ const rows=dialog.querySelector(".teacher-books");
+ gear.onclick=()=>{if(this.busy)return;rows.replaceChildren();this.books.forEach((book,i)=>{const label=document.createElement("label"),check=document.createElement("input");check.type="checkbox";check.checked=this.completed.includes(i);check.dataset.resetBook=i;label.append(check,document.createTextNode((i+1)+". "+book.title));check.onchange=()=>{this.completed=this.completed.filter(n=>n!==i);if(check.checked)this.completed.push(i);try{localStorage.setItem("heksenbos-books",JSON.stringify(this.completed))}catch{}this.show()};rows.append(label)});dialog.showModal()};
+ dialog.querySelector(".teacher-close").onclick=()=>dialog.close();dialog.addEventListener("close",()=>gear.focus());
+ }
  show(){this.node.hidden=false;this.field.classList.add('on-shelf');this.node.querySelectorAll('[data-book]').forEach(b=>{const i=+b.dataset.book,done=this.completed.includes(i);b.classList.toggle('completed',done);b.setAttribute('aria-label','Boek '+(i+1)+': '+this.books[i].title+(done?', behaald':''))})}
  hide(){this.node.hidden=true;this.field.classList.remove('on-shelf')}
  async finish(index,lastImage){
@@ -38,4 +45,3 @@ window.BookShelf=class{
  }finally{flying.remove();slot.style.visibility='';this.busy=false;slot.focus({preventScroll:true})}
  }
 };
-

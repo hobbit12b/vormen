@@ -97,3 +97,15 @@ header button svg,.hud #repeat svg{width:100%;height:100%;filter:none}header but
 .flying .gate{width:var(--ring-w);height:var(--ring-h);padding:var(--ring-pad);border-width:clamp(4px,1vh,7px)}.flying .gate-front{padding:0}.flying #flyer{width:var(--flight-size)}
 #bookshelf{padding-top:70px}.story-navigation{bottom:14px}
 @media(max-height:520px){header button{width:44px;height:44px;min-width:44px;min-height:44px;padding:9px}.hud{top:61px}.flying .hud h1{font-size:18px;line-height:1.18}.hud #repeat{width:42px;height:42px;min-width:42px;min-height:42px}.story-pages{max-height:calc(100% - 56px)}.story-navigation button,#skip-intro{min-height:44px;height:44px;padding:4px 12px}.shelf-crown{display:none}#bookshelf{padding-top:65px;padding-bottom:28px}.shelf-book{height:clamp(160px,62svh,270px)}.bookcase{padding-top:12px}}
+
+/* Quiet shelf and shared wooden controls. */
+#bookshelf{padding:70px 5% 70px;justify-content:center}
+.wood-control,#paused #resume{display:grid;place-items:center;color:#ffdf99;border:2px solid #b98b48;border-radius:48% 44% 47% 43%;background:radial-gradient(ellipse at 33% 22%,#aa794a55,transparent 55%),repeating-linear-gradient(6deg,#6b4528 0 4px,#624023 5px 7px,#704a2b 8px 11px);box-shadow:inset 0 0 0 2px #362914,0 3px 0 #30271a,0 4px 6px #152b2644}
+.wood-control{width:52px;height:52px;padding:11px}.wood-control svg,#resume svg{width:100%;height:100%}
+#teacher-settings{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom))}
+#paused{position:absolute;inset:0;transform:none;width:100%;height:100%;max-height:none;padding:0;margin:0;border:0;border-radius:0;box-shadow:none;background:#0c242d66;display:grid;place-items:center;overflow:hidden;z-index:25}
+#paused #resume{width:112px;height:112px;padding:30px;margin:0;border-width:3px;box-shadow:inset 0 0 0 3px #362914,0 6px 0 #30271a,0 12px 28px #071f2988}
+#teacher-dialog{width:min(470px,calc(100% - 32px));max-height:calc(100dvh - 36px);padding:24px;color:#ffedc4;background:linear-gradient(135deg,#65472e,#372c24);border:3px solid #b98b48;border-radius:22px;box-shadow:0 12px 40px #0008}
+#teacher-dialog::backdrop{background:#0c242dab}#teacher-dialog h2{font:26px Georgia;margin:0 0 12px}#teacher-dialog p{line-height:1.5;font-size:15px}.teacher-books{display:grid;gap:8px}.teacher-books label{display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 10px;border-radius:10px;background:#fff1bf0c;cursor:pointer}.teacher-books input{width:24px;height:24px;accent-color:#d6b265;flex-shrink:0}.device-note{opacity:.7}.teacher-close{color:#ffedc4;background:#655031;border:2px solid #b98b48;min-height:48px;padding:10px 28px}
+[hidden]{display:none!important}
+@media(max-height:520px){#bookshelf{padding:58px 5%}.shelf-book{height:clamp(145px,52svh,230px)}.bookcase{padding-top:12px;padding-bottom:12px}}
