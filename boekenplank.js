@@ -6,7 +6,7 @@ window.BookShelf=class{
  {title:'Uil en de zere vleugel',color:'#486575',image:'storyboard-uil/platen/09-uil-vliegt.webp',shapes:['vierkant','rechthoek','driehoek','cirkel'],turn:true},
  {title:'Kabouter en het hoge gras',color:'#986035',image:'storyboard-kabouter/platen/02-op-tenen.webp',shapes:['zeshoek','ovaal','ruit']},
  {title:'Slak wil op tijd zijn',image:'storyboard-slak/platen/01-samen-spelen.webp',color:'#745270',shapes:['zeshoek','ovaal','ruit'],turn:true},
- {title:'Ruimtelijke tovervormen',color:'#3e7467',shapes:['kubus','bol','balk','piramide','cilinder']}
+ {title:'Eekhoorntje en de wintervoorraad',image:'storyboard-eekhoorn/platen/08-wintervoorraad.webp',color:'#3e7467',shapes:['kubus','bol','balk','piramide','cilinder']}
  ];
  try{this.completed=JSON.parse(localStorage.getItem('heksenbos-books')||'[]');if(!Array.isArray(this.completed))this.completed=[]}catch{this.completed=[]}
  this.node=document.createElement('section');this.node.id='bookshelf';this.node.setAttribute('aria-label','Kies een boek');
