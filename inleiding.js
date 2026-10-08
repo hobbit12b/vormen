@@ -55,7 +55,7 @@ window.HedgehogIntro=class{
    this.narration=1;const index=this.index;
    const id=index===this.bridgeIndex?'verhaal_dienblad':'verhaal_'+this.node.dataset.mission+'_'+this.names[index];
    const token=this.narrationToken=(this.narrationToken||0)+1;
-   (this.mission===4&&index!==this.bridgeIndex?Promise.resolve():GameVoice.play(id)).then(()=>{if(this.narrationToken===token&&this.index===index)this.narrationDone=true});
+   GameVoice.play(id).then(()=>{if(this.narrationToken===token&&this.index===index)this.narrationDone=true});
   }
   if(this.index===this.bridgeIndex){
    if(this.narration===1){if(!this.narrationDone)return;this.narration=2;this.narrationDone=false;const token=this.narrationToken;GameVoice.play('verhaal_in_de_ketel').then(()=>{if(this.narrationToken===token)this.narrationDone=true})}
