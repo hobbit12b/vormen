@@ -11,7 +11,7 @@ kubus:["Zes vierkante vlakken, zoals een dobbelsteen.","Een kubus: zes vierkante
 bol:["Rond als een bal.","Een bol: rond als een bal."],
 balk:["Een lange doos met platte vlakken.","Een balk: een lange doos met platte vlakken."],
 piramide:["Driehoekige zijkanten, bovenaan één punt.","Een piramide: driehoekige zijkanten, bovenaan één punt."],
-cilinder:["Twee platte cirkels, zoals een blikje.","Een cilinder: twee platte cirkels, zoals een blikje."]
+cilinder:["Deze vorm lijkt op een blikje.","Een cilinder: twee platte cirkels, zoals een blikje."]
 };
 const api={descriptions,clue:s=>descriptions[s][0],praise:s=>descriptions[s][1]};
 if(typeof module!=='undefined')module.exports=api;else root.ShapeLanguage=api;
